@@ -77,7 +77,7 @@ def measure_time(algorithm, values, weights, capacity):
 
 # Main function to execute and compare algorithms
 def main():
-    n = 20  # Number of items
+    n = 100  # Number of items
     max_weight = 50
     max_value = 100
     values, weights, capacity = generate_data(n, max_weight, max_value)
