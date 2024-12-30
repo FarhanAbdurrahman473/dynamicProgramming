@@ -1,6 +1,7 @@
-import random
+import random 
 import timeit
 import tracemalloc
+import pandas as pd  # Import pandas untuk manipulasi data dan ekspor ke Excel
 
 # Generate random dataset
 def generate_data(n, max_weight, max_value):
@@ -68,7 +69,11 @@ def knapsack_divide_and_conquer(values, weights, capacity, n):
 
 # Measure execution time for each algorithm
 def measure_time(algorithm, values, weights, capacity):
-    return timeit.timeit(lambda: algorithm(values, weights, capacity, len(values)) if "divide_and_conquer" in algorithm.__name__ or "brute" in algorithm.__name__ else algorithm(values, weights, capacity), number=10)
+    if "divide_and_conquer" in algorithm.__name__ or "brute" in algorithm.__name__:
+        # Untuk algoritma yang memerlukan parameter tambahan
+        return timeit.timeit(lambda: algorithm(values, weights, capacity, len(values)), number=10)
+    else:
+        return timeit.timeit(lambda: algorithm(values, weights, capacity), number=10)
 
 # Main function to execute and compare algorithms
 def main():
@@ -76,6 +81,11 @@ def main():
     max_weight = 50
     max_value = 100
     values, weights, capacity = generate_data(n, max_weight, max_value)
+
+    # Tampilkan data yang dihasilkan (opsional)
+    print(f"Values: {values}")
+    print(f"Weights: {weights}")
+    print(f"Capacity: {capacity}\n")
 
     # Compare algorithms
     algorithms = [
@@ -86,14 +96,43 @@ def main():
         ("Divide and Conquer", knapsack_divide_and_conquer),
     ]
 
+    results = []  # List untuk menyimpan hasil
+
     for name, algorithm in algorithms:
         tracemalloc.start()
         time_taken = measure_time(algorithm, values, weights, capacity)
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
+        
+        # Jalankan algoritma sekali lagi untuk mendapatkan hasil optimalnya
+        if "divide_and_conquer" in algorithm.__name__ or "brute" in algorithm.__name__:
+            optimal_value = algorithm(values, weights, capacity, len(values))
+        elif "backtracking" in algorithm.__name__:
+            optimal_value = algorithm(values, weights, capacity)
+        else:
+            optimal_value = algorithm(values, weights, capacity)
+        
+        # Tambahkan hasil ke daftar
+        results.append({
+            "Algoritma": name,
+            "Waktu (detik)": round(time_taken, 6),
+            "Memori (KB)": round(current / 1024, 2),
+            "Memori Puncak (KB)": round(peak / 1024, 2),
+            "Nilai Optimal": optimal_value
+        })
+        
         print(f"{name}:")
-        print(f"  Time Taken: {time_taken:.4f} seconds")
-        print(f"  Memory Used: {current / 1024:.2f} KB (Peak: {peak / 1024:.2f} KB)\n")
+        print(f"  Time Taken: {time_taken:.6f} seconds")
+        print(f"  Memory Used: {current / 1024:.2f} KB (Peak: {peak / 1024:.2f} KB)")
+        print(f"  Nilai Optimal: {optimal_value}\n")
+
+    # Buat DataFrame dari hasil
+    df = pd.DataFrame(results)
+    
+    # Simpan ke file Excel
+    excel_file = "knapsack_results.xlsx"
+    df.to_excel(excel_file, index=False)
+    print(f"Hasil telah disimpan ke dalam file '{excel_file}'.")
 
 if __name__ == "__main__":
     main()
